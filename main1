@@ -1,0 +1,32 @@
+from getpass import getpass
+import nest_asyncio, asyncio, logging
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
+import os
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8361000455:AAH8T0mUZROmcMpM0-yaCWDRMxRHzz_wf_U")
+
+nest_asyncio.apply()
+logging.basicConfig(level=logging.INFO)
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Привет! Я буду помогать тебе с задачами по физике!")
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Команда: /start")
+
+app = ApplicationBuilder().token(BOT_TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+
+async def run():
+    await app.initialize()
+    await app.start()
+    print('go')
+    try:
+        await app.updater.start_polling()
+        await asyncio.Event().wait()
+    finally:
+        await app.updater.stop()
+        await app.stop()
+        await app.shutdown()
+
+await run()
