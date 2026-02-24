@@ -1,0 +1,20 @@
+import nest_asyncio, asyncio, logging
+from openai import AsyncOpenAI
+
+
+client = AsyncOpenAI(
+
+    api_key= key,
+
+    base_url="https://openrouter.ai/api/v1"  
+
+)
+
+async def ai_generate(text: str):
+  completion = await client.chat.completions.create(
+    model="deepseek/deepseek-chat",
+    messages=[{"role": "user", "content": text}]
+)
+
+  print(completion)
+  return (completion.choices[0].message.content)
