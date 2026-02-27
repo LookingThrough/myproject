@@ -1,3 +1,0 @@
-import os
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8361000455:AAH8T0mUZROmcMpM0-yaCWDRMxRHzz_wf_U")
-key = "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"
