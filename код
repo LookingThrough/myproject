@@ -1,0 +1,100 @@
+import nest_asyncio, asyncio, logging
+from openai import AsyncOpenAI
+import re
+
+client = AsyncOpenAI(
+
+    api_key= key_ai,
+
+    base_url="https://openrouter.ai/api/v1"
+
+)
+
+async def ai_generate_task(text: str):
+  completion = await client.chat.completions.create(
+    model="deepseek/deepseek-chat",
+    messages=[
+        {'role': 'user', 'content': text},
+        {"role": "user", "content": 'сгенерируй аналогичную задачу на основе предоставленной, перед тем как отправить пользователю проверь, что она решается и у нее получается красивый ответ, отправь пользователю только условие новой задачи без ответа, решения или каких-то дополнительных пояснений, не указывай что условие составлено так, чтобы ответ пллучился красивым' }
+        ]
+  )
+  
+  return(completion.choices[0].message.content)
+
+
+async def ai_generate_solution(text: str):
+  completion = await client.chat.completions.create(
+    model="deepseek/deepseek-chat",
+    messages=[
+        {'role': 'user', 'content': text},
+        {'role': 'user', 'content': 'напиши самое простое и лаконичное решение, но так, чтобы это было понятно'}
+        ]
+  )
+
+  return (completion.choices[0].message.content)
+
+def latex_to_plain(text: str) -> str:
+    lines = text.splitlines()
+    processed_lines = []
+
+    math_commands = {
+        r'\sin': 'sin',
+        r'\cos': 'cos',
+        r'\tan': 'tan',
+        r'\cot': 'cot',
+        r'\sec': 'sec',
+        r'\csc': 'csc',
+        r'\arcsin': 'arcsin',
+        r'\arccos': 'arccos',
+        r'\arctan': 'arctan',
+        r'\sinh': 'sinh',
+        r'\cosh': 'cosh',
+        r'\tanh': 'tanh',
+        r'\log': 'log',
+        r'\ln': 'ln',
+        r'\lg': 'lg',
+        r'\exp': 'exp',
+        r'\det': 'det',
+        r'\lim': 'lim',
+        r'\max': 'max',
+        r'\min': 'min',
+    }
+
+    for line in lines:
+        line = re.sub(r'\\frac\{([^{}]+)\}\{([^{}]+)\}', r'\1/\2', line)   
+        line = re.sub(r'\\boxed\{([^{}]+)\}', r'\1', line)                 
+        line = re.sub(r'\\text\{([^{}]*)\}', r'\1', line)                  
+        line = line.replace(r'\cdot', '*')                                 
+        line = line.replace(r'\Rightarrow', '→')                           
+        line = re.sub(r'\\[,;:]', '', line) 
+        line = re.sub(r'{', '', line)
+        line = re.sub(r'}', '', line)
+        line = line.replace(r'[', '')
+        line = line.replace(r']', '')                         
+
+        
+        for cmd, replacement in math_commands.items():
+            line = line.replace(cmd, replacement)
+
+        line = re.sub(r'\\([a-zA-Z]+)', '', line)
+        line = line.replace('\\', '')
+        line = re.sub(r'[ \t]+', ' ', line).strip()
+        processed_lines.append(line)
+
+    return '\n'.join(processed_lines)
+    
+
+nest_asyncio.apply()
+
+async def main():
+    user_question = input()
+    task = await ai_generate_task(user_question)
+    print(task)
+    question = input('Вы хотите увидеть решение задачи?')
+    if question == 'Да' or question == 'да':
+        solution = await ai_generate_solution(task)  
+        print(latex_to_plain(solution))
+
+asyncio.run(main())
+
+
